@@ -304,12 +304,10 @@ void* dataconn(void *param)
 			itr = channel[ch]->next;
 			frame = sizeof(int) * 2 + sizeof(uuid_t);
 			printlg(LOG_DATA, "Broadcasting to channel %d from %s.", ch, uuidstring(node->uuid));
-			for(int i=0; i<size-frame; i++)
-				printf("%d ", *(data+frame+i));
-			printf("\n");
+
 			while(itr)
 			{
-				if(itr->dgram) //&& itr != node) //Disabled for test with only one client
+				if(itr->dgram && itr != node)
 					sendto(sfd, data + frame, size - frame, 0, (struct sockaddr*)itr->dgram, addrlen);
 				itr = itr->next;
 			}
