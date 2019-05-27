@@ -1,3 +1,5 @@
+//gcc server.c -o cast.o -luuid -lpthread -Wall
+
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +33,7 @@ ssize_t chcount;
 PNode *channel;
 pthread_rwlock_t *listlock;
 pthread_t metathrd, datathrd;
-//sem_t dataqueue;
+//sem_t dataqueue; //TODO: Implement buffering
 
 char* timestamp()
 {
@@ -286,7 +288,7 @@ void* dataconn(void *param)
 		memcpy(&uuid, data + sizeof(int) * 2, sizeof(uuid_t));
 		printlg(LOG_DEBUG, "Read %d bytes: op=%c, ch=%d, uuid=%s.", size, op, ch, uuidstring(uuid));
 		
-		pthread_rwlock_rdlock(&listlock[ch]); //Causes 2 read locks
+		pthread_rwlock_rdlock(&listlock[ch]); //Causes 2 read locks (bad practice?)
 		node = findnode(ch, uuid);
 		if(node && op == 'u') //Update datagram entry
 		{
@@ -307,7 +309,7 @@ void* dataconn(void *param)
 
 			while(itr)
 			{
-				if(itr->dgram && itr != node)
+				if(itr->dgram && itr != node) //if(1) to hear your own voice (for testing)
 					sendto(sfd, data + frame, size - frame, 0, (struct sockaddr*)itr->dgram, addrlen);
 				itr = itr->next;
 			}
@@ -358,7 +360,7 @@ int main(int argc, char *argv[]) //TODO: Need a garbage collector thread
 			}
 			printlg(LOG_INFO, "Log level changed to %d.", loglvl);
 		}
-		else if(cmd == 'd')
+		else if(cmd == 'd') //Dump
 		{
 			int ch;
 			scanf(" %d", &ch);
